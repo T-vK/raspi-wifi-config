@@ -18,7 +18,7 @@ network={
 }
 setupWifiAp () { # setupWifiAp(bool usbEth, bool eth, string network, string ssid, string password, string channel, string dnsServer, string dhcpLeaseTime) 
     if [ ! -f "${rootPath}/etc/hostapd/hostapd.conf" ] || [ ! -f "${rootPath}/etc/default/hostapd" ] || [ ! -f "${rootPath}/etc/dnsmasq.conf" ]; then # dependencies not installed
-        if [ "$rootPath" = ""]; then # script is running on the raspi
+        if [ "$rootPath" = "" ]; then # script is running on the raspi
             sudo apt-get install hostapd dnsmasq
         else # script runs on a different system
             echo "Can't set up AP because one or more dependencies are not installed on the raspi system."
