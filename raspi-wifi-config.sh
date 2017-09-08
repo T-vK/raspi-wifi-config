@@ -115,15 +115,15 @@ user_setupWifiAp () {
     echo ""
     read -p "Does your Raspberry Pi have an Ethernet port? [y|N] " eth
     if [ "$eth" = "y" ] || [ "$eth" = "Y" ]; then
-        eth = true
+        eth=true
     else
-        eth = false
+        eth=false
     fi
     read -p "You you want to simulate a USB Ethernet device (useful for ssh over USB)? [y|N] " usbEth
     if [ "$usbEth" = "y" ] || [ "$usbEth" = "Y" ]; then
-        usbEth = true
+        usbEth=true
     else
-        usbEth = false
+        usbEth=false
     fi
     read -p "Enter a valid 24bit network address (e.g.: 192.168.50.0): " network 
     read -p "Enter an SSID (name) for the AP (hotspot) that we are creating: " ssid 

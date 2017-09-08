@@ -9,4 +9,5 @@
 
 ## How to use
 Just download the script and open it with bash.  
-You can either run it on your Raspberry Pi or you can mount your Raspberry Pi's SD card on a different computer (both partitions need to be mounted).  
+You can either run it on your Raspberry Pi or you can mount your Raspberry Pi's SD card on a different computer (both partitions need to be mounted). 
+The script will then ask you what you want to do. It will also warn you about things that could go wrong. So, in your own interest, pay attention. 
