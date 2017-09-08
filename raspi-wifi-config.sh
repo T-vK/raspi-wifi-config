@@ -35,17 +35,17 @@ setupWifiAp () { # setupWifiAp(bool usbEth, bool eth, string network, string ssi
     channel=$6
     dnsServer=$7
     dhcpLeaseTime=$8
-    usbPlaceHolder1 = ''
-    usbPlaceHolder2 = ''
-    ethPlaceholder1 = ''
-    ethPlaceholder2 = ''
+    usbPlaceHolder1=''
+    usbPlaceHolder2=''
+    ethPlaceholder1=''
+    ethPlaceholder2=''
     if [ "$usbEth" = true ] ; then
-        usbPlaceHolder1 = 'auto usb0'
-        usbPlaceHolder2 = 'iface usb0 inet dhcp'
+        usbPlaceHolder1='auto usb0'
+        usbPlaceHolder2='iface usb0 inet dhcp'
     fi
     if [ "$eth" = true ] ; then
-        ethPlaceholder1 = 'auto eth0'
-        ethPlaceholder2 = 'iface eth0 inet dhcp'
+        ethPlaceholder1='auto eth0'
+        ethPlaceholder2='iface eth0 inet dhcp'
     fi
     ipPrefix=$(echo ${network%.0})
     
