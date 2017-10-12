@@ -70,9 +70,33 @@ setupWifiAp () { # setupWifiAp(bool usbEth, bool eth, string network, string ssi
     fi
     ipPrefix=$(echo ${network%.0})
     
+    sudo echo "source-directory /etc/network/interfaces.d
+
+auto lo
+${ethPlaceholder1}
+${usbPlaceHolder1}
+auto wlan0
+auto uap0
+
+${ethPlaceholder2}
+${usbPlaceHolder2}
+iface lo inet loopback
+
+allow-hotplug wlan0
+
+iface wlan0 inet dhcp
+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+iface uap0 inet static
+  address ${ipPrefix}.1
+  netmask 255.255.255.0
+  network ${ipPrefix}.0
+  broadcast ${ipPrefix}.255
+gateway ${ipPrefix}.1" | sudo tee -a "${rootPath}/etc/network/interfaces" > /dev/null
+
     sudo iw dev wlan0 interface add uap0 type __ap
     sudo ip addr add "${ipPrefix}.1/24" dev uap0
-    
+
     sudo rm "${rootPath}/etc/hostapd/hostapd.conf"
     sudo echo "interface=uap0
 ssid=${ssid}
