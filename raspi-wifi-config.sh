@@ -1,12 +1,30 @@
 #!/bin/bash
+
+
+
 enableSsh () {
     sudo touch "${bootPath}/ssh"
 }
-createUsbEthernet () {
+
+
+
+changeHostname () { # changeHostname(string hostname)
+    newHostname=$1
+    oldHostname=`sudo cat ${rootPath}/etc/hostname`
+    sudo echo "${newHostname}" | sudo tee "${rootPath}/etc/hostname" > /dev/null
+    sudo sed -i -e "s/${oldHostname}/${newHostname}/g" "${rootPath}/etc/hosts"
+}
+
+
+
+createUsbEthernet () { # createUsbEthernet()
     echo "
 dtoverlay=dwc2" | sudo tee -a "${bootPath}/config.txt" > /dev/null
     sudo sed -i -e 's/rootwait/rootwait modules-load=dwc2,g_ether/g' "${bootPath}/cmdline.txt"
 }
+
+
+
 setupWifiClient () { # setupWifiClient(string ssid, string password)
     ssid=$1
     password=$2
@@ -16,6 +34,9 @@ network={
     psk=\"$2\"
 }" | sudo tee -a "${rootPath}/etc/wpa_supplicant/wpa_supplicant.conf" > /dev/null
 }
+
+
+
 setupWifiAp () { # setupWifiAp(bool usbEth, bool eth, string network, string ssid, string password, string channel, string dnsServer, string dhcpLeaseTime) 
     if [ ! -f "${rootPath}/etc/hostapd/hostapd.conf" ] || [ ! -f "${rootPath}/etc/default/hostapd" ] || [ ! -f "${rootPath}/etc/dnsmasq.conf" ]; then # dependencies not installed
         if [ "$rootPath" = "" ]; then # script is running on the raspi
@@ -49,25 +70,9 @@ setupWifiAp () { # setupWifiAp(bool usbEth, bool eth, string network, string ssi
     fi
     ipPrefix=$(echo ${network%.0})
     
-    sudo rm "${rootPath}/etc/network/interfaces"
-    sudo echo "source-directory /etc/network/interfaces.d
-auto lo
-$ethPlaceholder1
-$usbPlaceHolder1
-auto wlan0
-auto uap0
-$ethPlaceholder2
-$usbPlaceHolder2
-iface lo inet loopback
-allow-hotplug wlan0
-iface wlan0 inet dhcp
-wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
-iface uap0 inet static
-  address ${ipPrefix}.1
-  netmask 255.255.255.0
-  network ${ipPrefix}.0
-  broadcast ${ipPrefix}.255
-  gateway ${ipPrefix}.1" | sudo tee -a "${rootPath}/etc/network/interfaces" > /dev/null
+    sudo iw dev wlan0 interface add uap0 type __ap
+    sudo ip addr add "${ipPrefix}.1/24" dev uap0
+    
     sudo rm "${rootPath}/etc/hostapd/hostapd.conf"
     sudo echo "interface=uap0
 ssid=${ssid}
@@ -106,12 +111,26 @@ dhcp-range=${ipPrefix}.50,${ipPrefix}.150,${dhcpLeaseTime}" | sudo tee -a "${roo
     #sudo echo "/bin/bash /usr/local/bin/hostapdstart" | sudo tee -a "${rootPath}/etc/rc.local" > /dev/null
     sudo sed -i -e 's/exit 0/\/bin\/bash \/usr\/local\/bin\/hostapdstart\nexit 0/g' "${rootPath}/etc/rc.local"
 }
+
+
+
+user_changeHostname () {
+    echo ""
+    read -p "Enter the new hostname: " newHostname
+    changeHostname $newHostname
+}
+
+
+
 user_setupWifiClient () {
     echo ""
     read -p "Enter the ssid (name) of the WiFi netowrk: " ssid 
     read -p "Enter the password of the WiFi netowrk: " password 
     setupWifiClient $ssid $password
 }
+
+
+
 user_setupWifiAp () {
     echo ""
     read -p "Does your Raspberry Pi have an Ethernet port? [y|N] " eth
@@ -134,6 +153,9 @@ user_setupWifiAp () {
     read -p "Enter dhcp lease time that you like (e.g.: 12h): " dhcpLeaseTime 
     setupWifiAp $usbEth $eth $network $ssid $password $channel $dnsServer $dhcpLeaseTime
 }
+
+
+
 echo ""
 echo "This script is not capable of undoing any of the changes it makes!"
 echo ""
@@ -143,15 +165,24 @@ echo "Please pay attention. The script will tell you which files are affected an
 echo ""
 echo "You can run this script on the Raspberry Pi directly or you can mount the SD card with Raspbian on a different device."
 echo ""
+
+
+
 echo "Enter the path to the boot partition of your Raspberry Pi."
 echo "For example '/boot/' if you are running this script form your Raspi directly"
 echo "or e.g. '/media/ubuntu/boot/' if you mounted the SD card partitions on another machine."
 read -p "Enter boot path: " bootPath
+
+
+
 echo "Enter the path to the root directory of your Raspberry Pi's root directory."
 echo "For example '/' if you are running this script form your Raspi directly"
 echo "or e.g. '/media/ubuntu/4tv3g5vgee6/' if you mounted the SD card partitions on another machine."
 read -p "Enter root path: " rootPath 
 echo ""
+
+
+
 #Remove trailing slashes
 length=${#bootPath}
 last_char=${bootPath:length-1:1}
@@ -168,6 +199,8 @@ case $yn in
     * ) echo "Continuing.";;
 esac
 echo ""
+
+
 echo "Enableing ssh will create the following file '${bootPath}/ssh' unless it already exists."
 read -p "Do you wish to enable ssh? [y|N]" yn
 case $yn in
@@ -176,6 +209,22 @@ case $yn in
     * ) echo "Skipped.";;
 esac
 echo ""
+
+
+echo "Changing the hostname will "
+echo "- overwrite this file '${rootPath}/etc/hostname' "
+echo "- and will replace all occourences of the old hostname with the new hostname in '${rootPath}/etc/hosts'"
+echo "  (So if your current hostname is e.g. a single letter then this file might get messed up.)"
+read -p "Do you wish to change the hostname? [y|N]" yn
+case $yn in
+    [Yy]* ) user_changeHostname;;
+    [Nn]* ) echo "Skipped.";;
+    * ) echo "Skipped.";;
+esac
+echo ""
+
+
+
 echo "Creating a USB Ethernet device will add one line to '${bootPath}/config.txt' and it will replace 'rootwait' with 'rootwait modules-load=dwc2,g_ether' in  '${bootPath}/cmdline.txt'."
 echo "Please be aware, this can only be done once! If you do this multiple times, your cmdline.txt will most likely be invalid."
 echo "If you also would like to make the Raspi act as an AP (hotspot), you have to do this first!"
@@ -186,6 +235,8 @@ case $yn in
     * ) echo "Skipped.";;
 esac
 echo ""
+
+
 echo "Setting up the Raspi to auto connect to a WiFi AP will append a few lines to '${rootPath}/etc/wpa_supplicant/wpa_supplicant.conf'."
 echo "Every time you do this, another network will be added to the configuration file. Just try to not add the same network twice."
 echo "This has only be tested for standard WPA2 networks."
@@ -196,6 +247,9 @@ case $yn in
     * ) echo "Skipped.";;
 esac
 echo ""
+
+
+
 echo "You can set up the Raspi to act as an AP (hotspot)."
 echo "This can be combined with the last option (connecting to another WiFi network). But it will only work, if they both use the same WiFi channel."
 echo "Setting up the Raspi as a hotspot will:"
