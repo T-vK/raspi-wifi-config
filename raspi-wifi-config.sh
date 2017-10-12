@@ -107,7 +107,11 @@ domain-needed
 bogus-priv
 dhcp-range=${ipPrefix}.50,${ipPrefix}.150,${dhcpLeaseTime}" | sudo tee -a "${rootPath}/etc/dnsmasq.conf" > /dev/null
     
-    sudo service dnsmasq start
+    sudo service dnsmasq restart
+    sudo /etc/init.d/hostapd start
+    sudo /etc/init.d/hostapd stop
+    sudo /etc/init.d/hostapd restart
+    
     #sudo echo "/bin/bash /usr/local/bin/hostapdstart" | sudo tee -a "${rootPath}/etc/rc.local" > /dev/null
     sudo sed -i -e 's/exit 0/\/bin\/bash \/usr\/local\/bin\/hostapdstart\nexit 0/g' "${rootPath}/etc/rc.local"
 }
